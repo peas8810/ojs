@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+  <style>
+    body{margin:0;font-family:Arial,system-ui;background:#fff}
+    .card{border:1px solid #e5e7eb;border-radius:12px;padding:16px;max-width:1000px;margin:0 auto}
+    .top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .title{font-size:16px;font-weight:700}
+    .meta{font-size:13px;opacity:.75}
+    .foot{margin-top:10px;font-size:12px;opacity:.8}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="top">
+      <div class="title">Scilit Metrics</div>
+      <div id="meta" class="meta">Carregando métricas...</div>
+    </div>
+
+    <div style="margin-top:12px;">
+      <canvas id="chart" height="110"></canvas>
+    </div>
+
+    <div class="foot">Fonte: Scilit | Última atualização: <span id="updated">—</span></div>
+  </div>
+
+  <script>
+  (async function(){
+    const DATA_URL = "https://raw.githubusercontent.com/peas8810/ojs/main/remunom-scilit.json";
+
+    try{
+      const res = await fetch(DATA_URL + "?t=" + Date.now(), { cache: "no-store" });
+      if(!res.ok) throw new Error("HTTP " + res.status);
+
+      const data = await res.json();
+
+      document.getElementById("meta").textContent =
+        `h5-index: ${data.h5_index ?? "—"} | MCM: ${data.mcm ?? "—"}`;
+
+      document.getElementById("updated").textContent = data.updated_at ?? "—";
+
+      const labels = (data.series || []).map(x => x.month);
+      const values = (data.series || []).map(x => x.value);
+
+      new Chart(document.getElementById("chart"),{
+        type:"line",
+        data:{ labels, datasets:[{ label:"Monthly Citation Metric (MCM)", data:values, tension:.3, fill:true, pointRadius:4 }]},
+        options:{ responsive:true, plugins:{ legend:{ display:true } }, scales:{ y:{ beginAtZero:true } } }
+      });
+
+    }catch(e){
+      document.getElementById("meta").textContent = "Erro ao carregar métricas (verifique o JSON).";
+      console.log(e);
+    }
+  })();
+  </script>
+</body>
+</html>
